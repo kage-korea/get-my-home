@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>아파트 찾기 결과</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+:root{--bg:#f6f7f9;--card:#fff;--ink:#1d2330;--sub:#667085;--line:#e4e7ec;--ok:#12a150;--edge:#e9a100;--over:#d64545;--accent:#3b5bdb}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;background:var(--bg);color:var(--ink)}
+header{padding:16px 20px;background:#fff;border-bottom:1px solid var(--line)}
+header h1{margin:0 0 6px;font-size:20px}
+.meta{color:var(--sub);font-size:13px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.chip{display:inline-block;padding:2px 8px;border:1px solid var(--line);border-radius:999px;background:#fafbfc;font-size:12px;color:#344054}
+.wrap{display:grid;grid-template-columns:380px 1fr;gap:14px;padding:14px;height:calc(100vh - 92px)}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden;display:flex;flex-direction:column;min-height:0}
+.tools{padding:10px;border-bottom:1px solid var(--line);display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.tab{border:1px solid var(--line);background:#fff;border-radius:8px;padding:5px 10px;font-size:13px;cursor:pointer}
+.tab.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.tools label{font-size:13px;color:#344054;display:flex;gap:4px;align-items:center}
+.tools select{font-size:13px;padding:4px;border-radius:6px;border:1px solid var(--line)}
+.list{overflow:auto;flex:1}
+.item{padding:10px 12px;border-bottom:1px solid var(--line);cursor:pointer}
+.item:hover{background:#f9fafb}
+.item.sel{background:#eef2ff;border-left:4px solid var(--accent);padding-left:8px}
+.item .t{display:flex;justify-content:space-between;gap:6px;align-items:center}
+.item .n{font-weight:600;font-size:14px}
+.badge{font-size:11px;padding:2px 7px;border-radius:999px;color:#fff;white-space:nowrap}
+.b-추천{background:var(--ok)}.b-경계{background:var(--edge)}.b-초과{background:var(--over)}
+.mini{display:flex;gap:10px;font-size:12px;color:var(--sub);margin-top:4px;flex-wrap:wrap}
+.mini b{color:var(--ink);font-weight:600}
+.sch-ok{color:var(--ok)!important}
+.right{display:grid;grid-template-rows:minmax(260px,46%) 1fr;gap:14px;min-height:0}
+#map{width:100%;height:100%}
+.detail{overflow:auto;padding:16px}
+.detail h2{margin:0;font-size:18px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.detail .sub{color:var(--sub);font-size:13px;margin:4px 0 14px}
+.detail a{color:var(--accent)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+.stat{border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.stat .k{font-size:12px;color:var(--sub)}
+.stat .v{font-size:20px;font-weight:700;margin:2px 0 6px}
+.stat .v small{font-size:12px;color:var(--sub);font-weight:400}
+.bar{position:relative;height:8px;background:#eef0f3;border-radius:6px}
+.bar i{position:absolute;left:0;top:0;bottom:0;border-radius:6px}
+.bar u{position:absolute;top:-4px;bottom:-4px;width:2px;background:#344054}
+.bar-cap{display:flex;justify-content:space-between;font-size:11px;color:var(--sub);margin-top:3px}
+.timeline{margin:14px 0 4px}
+.timeline .k{font-size:12px;color:var(--sub);margin-bottom:6px}
+.tl{position:relative;display:flex;height:30px;border-radius:8px;overflow:visible;background:#eef0f3}
+.tl span{display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;white-space:nowrap;overflow:hidden}
+.tl span:first-child{border-radius:8px 0 0 8px}
+.tl span:last-child{border-radius:0 8px 8px 0}
+.tl .lim{position:absolute;top:-6px;bottom:-6px;width:2px;background:var(--over)}
+.tl .limt{position:absolute;top:-20px;font-size:11px;color:var(--over);transform:translateX(-50%)}
+table.facts{width:100%;border-collapse:collapse;margin-top:14px;font-size:13px}
+table.facts td{border-top:1px solid var(--line);padding:7px 4px;vertical-align:top}
+table.facts td:first-child{color:var(--sub);width:120px}
+.notes{font-size:12px;color:var(--sub);margin-top:14px;line-height:1.6}
+.legend{background:#fff;padding:6px 8px;border-radius:8px;font-size:12px;line-height:1.6;box-shadow:0 1px 4px rgba(0,0,0,.15)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:4px;vertical-align:middle}
+.rt-label{background:rgba(255,255,255,.92);border:1px solid #ccc;border-radius:6px;padding:1px 6px;font-size:11px;font-weight:600;box-shadow:none}
+.maperr{padding:20px;color:var(--sub);font-size:13px}
+@media (max-width:900px){.wrap{grid-template-columns:1fr;height:auto}.panel{max-height:none}.list{max-height:46vh}.right{grid-template-rows:340px auto}}
+</style>
+</head>
+<body>
+<header>
+  <h1>🏠 충무로역 통근권 아파트 찾기</h1>
+  <div class="meta" id="meta"></div>
+</header>
+<div class="wrap">
+  <section class="panel">
+    <div class="tools">
+      <button class="tab on" data-cat="전체">전체</button>
+      <button class="tab" data-cat="추천">추천</button>
+      <button class="tab" data-cat="경계">경계</button>
+      <button class="tab" data-cat="초과">70분 초과</button>
+      <label><input type="checkbox" id="schOnly"> 초교 10분내만</label>
+      <select id="sort">
+        <option value="default">기본 정렬</option>
+        <option value="commute">통근시간 짧은 순</option>
+        <option value="school">초교 가까운 순</option>
+        <option value="walk">역 가까운 순</option>
+        <option value="price">가격 낮은 순</option>
+      </select>
+    </div>
+    <div class="list" id="list"></div>
+  </section>
+  <section class="right">
+    <div class="panel"><div id="map"></div></div>
+    <div class="panel"><div class="detail" id="detail"></div></div>
+  </section>
+</div>
+<script src="data.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+(function(){
+const R=window.RUN, A=window.APTS, P=R.params;
+const catOrder={"추천":0,"경계":1,"초과":2};
+const catColor={"추천":"#12a150","경계":"#e9a100","초과":"#d64545"};
+const isSch=a=>a.schoolMin<=P.schoolMax;
+const hg=id=>"https://hogangnono.com/apt/"+id;
+const yearsOld=b=>{const y=+b.slice(0,4),m=+b.slice(5,7);const d=new Date(R.date);return Math.max(0,((d.getFullYear()-y)*12+(d.getMonth()+1-m))/12)};
+const fmtM=m=>m>=1000?(m/1000).toFixed(1)+"km":m+"m";
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+// header
+const cnt=c=>A.filter(a=>a.cat===c).length;
+document.getElementById("meta").innerHTML=
+ `<span>실행일 <b>${R.date}</b></span>`+
+ [`최대 ${P.maxPrice}억 이하`,`${P.base} 편도 ${P.commuteMax}분 이내`,P.area,P.age,`${P.households}세대 이상`,`역 도보 ${P.walkMax}m 이내`,`초교 도보 ${P.schoolMax}분 우선`].map(x=>`<span class="chip">${x}</span>`).join("")+
+ `<span>· 추천 ${cnt("추천")} · 경계 ${cnt("경계")} · 70분 초과 ${cnt("초과")} · 초교 10분내 ${A.filter(isSch).length}</span>`;
+
+let cat="전체", schOnly=false, sort="default", selId=null;
+function defaultCmp(a,b){return catOrder[a.cat]-catOrder[b.cat]||(isSch(b)-isSch(a))||(isSch(a)&&isSch(b)?a.schoolMin-b.schoolMin:0)||a.commute-b.commute}
+function rows(){
+  let r=A.filter(a=>(cat==="전체"||a.cat===cat)&&(!schOnly||isSch(a)));
+  const f={default:defaultCmp,commute:(a,b)=>a.commute-b.commute,school:(a,b)=>a.schoolMin-b.schoolMin,walk:(a,b)=>a.walkM-b.walkM,price:(a,b)=>a.priceMin-b.priceMin}[sort];
+  return r.sort(f);
+}
+function renderList(){
+  const r=rows();
+  document.getElementById("list").innerHTML=r.map(a=>`
+   <div class="item ${a.id===selId?"sel":""}" data-id="${a.id}">
+    <div class="t"><span class="n">${esc(a.name)}</span><span class="badge b-${a.cat}">${a.cat}</span></div>
+    <div class="mini"><span>${a.region} · ${a.station}</span></div>
+    <div class="mini">
+      <span>통근 <b>${a.commute}${a.rideEstimated?"(추정)":""}분</b></span>
+      <span>역 <b>${a.walkMin}분</b></span>
+      <span class="${isSch(a)?"sch-ok":""}">${esc(a.school)} <b class="${isSch(a)?"sch-ok":""}">${a.schoolMin}분${isSch(a)?" ✓":""}</b></span>
+      <span><b>${a.priceMin===a.priceMax?a.priceMin:a.priceMin+"~"+a.priceMax}억</b></span>
+    </div>
+   </div>`).join("")||`<div class="item">조건에 맞는 단지가 없습니다.</div>`;
+  document.querySelectorAll(".item[data-id]").forEach(el=>el.onclick=()=>select(el.dataset.id,true));
+}
+function gauge(label,val,unit,max,limit,limitLabel,good,sub){
+  const pct=Math.min(100,val/max*100), lp=Math.min(100,limit/max*100);
+  const col=good?"var(--ok)":"var(--over)";
+  return `<div class="stat"><div class="k">${label}</div><div class="v">${val}${unit} ${sub?`<small>${sub}</small>`:""}</div>
+   <div class="bar"><i style="width:${pct}%;background:${col}"></i><u style="left:${lp}%"></u></div>
+   <div class="bar-cap"><span>0</span><span>기준 ${limitLabel}</span><span>${max}${unit}</span></div></div>`;
+}
+function renderDetail(a){
+  const d=document.getElementById("detail");
+  if(!a){d.innerHTML=`<div class="sub">왼쪽 목록에서 단지를 선택하세요.</div><div class="notes">${R.notes.map(n=>"· "+esc(n)).join("<br>")}</div>`;return}
+  const age=yearsOld(a.built);
+  const total=Math.max(a.commute,P.commuteMax)+10;
+  const lc=R.lineColor[a.line]||"#555";
+  const rideLabel=a.via?`${a.line} → ${a.via} → ${a.transferLine}`:a.line;
+  const tl=`<div class="timeline"><div class="k">충무로역까지 door-to-door (${a.commute}분${a.rideEstimated?", 전철 구간 추정":""})</div>
+   <div class="tl">
+    <span style="width:${a.walkMin/total*100}%;background:#98a2b3" title="도보">🚶 ${a.walkMin}분</span>
+    <span style="width:${a.rideMin/total*100}%;background:${lc}" title="${esc(rideLabel)}">🚇 ${esc(rideLabel)} ${a.rideMin}분</span>
+    <i class="lim" style="left:${P.commuteMax/total*100}%"></i><b class="limt" style="left:${P.commuteMax/total*100}%">${P.commuteMax}분</b>
+   </div></div>`;
+  d.innerHTML=`
+   <h2>${esc(a.name)} <span class="badge b-${a.cat}">${a.cat}</span>${isSch(a)?'<span class="badge" style="background:#3b5bdb">초교 10분내</span>':""}</h2>
+   <div class="sub">${a.region} · ${a.station}(${a.line}) · <a href="${hg(a.id)}" target="_blank" rel="noopener">호갱노노에서 보기 ↗</a></div>
+   ${tl}
+   <div class="grid" style="margin-top:14px">
+    ${gauge("충무로역까지 통근",a.commute,"분",100,P.commuteMax,P.commuteMax+"분",a.commute<=P.commuteMax,a.rideEstimated?"추정 포함":"")}
+    ${gauge("역까지 도보",a.walkM,"m",1500,P.walkMax,P.walkMax+"m",a.walkM<=P.walkMax,`${a.walkMin}분`)}
+    ${gauge("가장 가까운 초교 도보",a.schoolMin,"분",20,P.schoolMax,P.schoolMax+"분",isSch(a),`${esc(a.school)} ${fmtM(a.schoolM)}`)}
+    ${gauge("가격(상단)",a.priceMax,"억",15,P.maxPrice,P.maxPrice+"억",a.priceMax<=P.maxPrice,a.priceMin!==a.priceMax?`${a.priceMin}~`:"")}
+    ${gauge("세대수",a.hh,"세대",3500,P.households,P.households+"세대",a.hh>=P.households,"")}
+    ${gauge("연식",+age.toFixed(1),"년",25,20,"20년",age<20,`준공 ${a.built}`)}
+   </div>
+   <table class="facts">
+    <tr><td>가격</td><td>${esc(a.priceText)}</td></tr>
+    <tr><td>통학구역</td><td>${esc(a.schoolDistrict)} <span style="color:var(--sub)">(호갱노노 표기, 배정은 교육청 확인 필요)</span></td></tr>
+    <tr><td>경로</td><td>도보 ${a.walkMin}분(${fmtM(a.walkM)}) → ${esc(a.station)} → ${esc(rideLabel)} ${a.rideMin}분${a.rideEstimated?"(추정)":""} → 충무로역</td></tr>
+    <tr><td>비고</td><td>${esc(a.memo||"")}</td></tr>
+   </table>
+   <div class="notes">${R.notes.map(n=>"· "+esc(n)).join("<br>")}</div>`;
+}
+
+// map
+let map=null, markers={}, routeLayer=null;
+function initMap(){
+  if(!window.L){document.getElementById("map").innerHTML='<div class="maperr">지도 라이브러리를 불러오지 못했습니다(네트워크 확인). 목록과 상세 정보는 그대로 볼 수 있습니다.</div>';return}
+  map=L.map("map",{zoomControl:true});
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:18,attribution:'&copy; OpenStreetMap contributors'}).addTo(map);
+  const cm=R.chungmuro;
+  L.marker([cm.lat,cm.lng],{title:"충무로역"}).addTo(map).bindTooltip("★ 충무로역",{permanent:true,direction:"top",className:"rt-label"});
+  A.forEach(a=>{
+    markers[a.id]=L.circleMarker([a.lat,a.lng],{radius:7,color:"#fff",weight:2,fillColor:catColor[a.cat],fillOpacity:.95})
+      .addTo(map).bindTooltip(a.name).on("click",()=>select(a.id,false));
+  });
+  const lg=L.control({position:"bottomleft"});
+  lg.onAdd=()=>{const d=L.DomUtil.create("div","legend");d.innerHTML=Object.keys(catColor).map(k=>`<i style="background:${catColor[k]}"></i>${k}`).join(" &nbsp;")+"<br>— 회색 점선: 도보 · 색 실선: 전철(개략)";return d};
+  lg.addTo(map);
+  routeLayer=L.layerGroup().addTo(map);
+  map.fitBounds(L.latLngBounds(A.map(a=>[a.lat,a.lng]).concat([[cm.lat,cm.lng]])),{padding:[20,20]});
+}
+function drawRoute(a){
+  if(!map)return;
+  routeLayer.clearLayers();
+  Object.entries(markers).forEach(([id,m])=>m.setRadius(id===a.id?11:7));
+  const cm=R.chungmuro, st=[a.stLat,a.stLng];
+  const walk=L.polyline([[a.lat,a.lng],st],{color:"#667085",weight:4,dashArray:"6 6"}).addTo(routeLayer);
+  walk.bindTooltip(`🚶 ${a.walkMin}분`,{permanent:true,className:"rt-label"});
+  L.circleMarker(st,{radius:6,color:R.lineColor[a.line]||"#555",weight:3,fillColor:"#fff",fillOpacity:1}).addTo(routeLayer).bindTooltip(a.station);
+  let pts=[st], segs=[];
+  if(a.via){const v=R.transfers[a.via];segs.push([st,[v.lat,v.lng],R.lineColor[a.line]]);segs.push([[v.lat,v.lng],[cm.lat,cm.lng],R.lineColor[a.transferLine]]);
+    L.circleMarker([v.lat,v.lng],{radius:5,color:"#333",weight:2,fillColor:"#fff",fillOpacity:1}).addTo(routeLayer).bindTooltip(a.via+" 환승");}
+  else segs.push([st,[cm.lat,cm.lng],R.lineColor[a.line]||"#555"]);
+  segs.forEach((s,i)=>{const pl=L.polyline([s[0],s[1]],{color:s[2],weight:5,opacity:.9,dashArray:a.rideEstimated?"10 6":null}).addTo(routeLayer);
+    if(i===0)pl.bindTooltip(`🚇 ${a.rideMin}분${a.rideEstimated?"(추정)":""}`,{permanent:true,className:"rt-label"});});
+  map.fitBounds(L.latLngBounds([[a.lat,a.lng],st,[cm.lat,cm.lng]]),{padding:[40,40]});
+}
+function select(id,fromList){
+  selId=id; const a=A.find(x=>x.id===id);
+  renderList(); renderDetail(a); drawRoute(a);
+  if(!fromList){const el=document.querySelector(`.item[data-id="${id}"]`);el&&el.scrollIntoView({block:"nearest"})}
+}
+document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{document.querySelectorAll(".tab").forEach(x=>x.classList.remove("on"));b.classList.add("on");cat=b.dataset.cat;renderList()});
+document.getElementById("schOnly").onchange=e=>{schOnly=e.target.checked;renderList()};
+document.getElementById("sort").onchange=e=>{sort=e.target.value;renderList()};
+initMap(); renderList();
+const first=rows()[0]; if(first) select(first.id,true); else renderDetail(null);
+})();
+</script>
+</body>
+</html>

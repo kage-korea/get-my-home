@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>get-my-home · 아파트 찾기 결과</title>
+<style>body{font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;background:#f6f7f9;margin:0;color:#1d2330}
+main{max-width:640px;margin:40px auto;padding:0 16px}h1{font-size:22px}.c{background:#fff;border:1px solid #e4e7ec;border-radius:12px}
+a.r{display:flex;justify-content:space-between;padding:14px 16px;border-top:1px solid #e4e7ec;color:inherit;text-decoration:none}a.r:first-child{border-top:0}a.r:hover{background:#f9fafb}
+.s{color:#667085;font-size:13px}.n{font-size:11px;background:#3b5bdb;color:#fff;border-radius:999px;padding:2px 8px;margin-left:6px}</style></head>
+<body><main><h1>🏠 충무로역 통근권 아파트 찾기</h1><p class="s">실행일별 결과입니다. 최신 결과가 맨 위에 있습니다.</p>
+<div class="c" id="l"><div class="r s">불러오는 중…</div></div></main>
+<script>
+fetch("dates.json",{cache:"no-store"}).then(r=>r.json()).then(d=>{d.sort().reverse();
+document.getElementById("l").innerHTML=d.map((x,i)=>`<a class="r" href="${x}/"><span>${x}${i===0?'<span class="n">최신</span>':''}</span><span class="s">결과 보기 →</span></a>`).join("")})
+.catch(()=>{document.getElementById("l").innerHTML='<div class="r s">목록을 불러오지 못했습니다.</div>'});
+</script></body></html>
