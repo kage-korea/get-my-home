@@ -4,7 +4,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>아파트 찾기 결과</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
 :root{--bg:#f6f7f9;--card:#fff;--ink:#1d2330;--sub:#667085;--line:#e4e7ec;--ok:#12a150;--edge:#e9a100;--over:#d64545;--accent:#3b5bdb}
 *{box-sizing:border-box}
@@ -32,7 +31,7 @@ header h1{margin:0 0 6px;font-size:20px}
 .mini b{color:var(--ink);font-weight:600}
 .sch-ok{color:var(--ok)!important}
 .right{display:grid;grid-template-rows:minmax(260px,46%) 1fr;gap:14px;min-height:0}
-#map{width:100%;height:100%}
+#map{width:100%;height:100%;position:relative}
 .detail{overflow:auto;padding:16px}
 .detail h2{margin:0;font-size:18px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .detail .sub{color:var(--sub);font-size:13px;margin:4px 0 14px}
@@ -58,9 +57,13 @@ table.facts{width:100%;border-collapse:collapse;margin-top:14px;font-size:13px}
 table.facts td{border-top:1px solid var(--line);padding:7px 4px;vertical-align:top}
 table.facts td:first-child{color:var(--sub);width:120px}
 .notes{font-size:12px;color:var(--sub);margin-top:14px;line-height:1.6}
-.legend{background:#fff;padding:6px 8px;border-radius:8px;font-size:12px;line-height:1.6;box-shadow:0 1px 4px rgba(0,0,0,.15)}
+.legend{position:absolute;left:8px;bottom:8px;z-index:3;background:#fff;padding:6px 8px;border-radius:8px;font-size:12px;line-height:1.6;box-shadow:0 1px 4px rgba(0,0,0,.15)}
 .legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:4px;vertical-align:middle}
-.rt-label{background:rgba(255,255,255,.92);border:1px solid #ccc;border-radius:6px;padding:1px 6px;font-size:11px;font-weight:600;box-shadow:none}
+.rt-label{background:rgba(255,255,255,.95);border:1px solid #bbb;border-radius:6px;padding:1px 6px;font-size:11px;font-weight:600;white-space:nowrap;transform:translateY(-14px)}
+.pin{width:14px;height:14px;border-radius:50%;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.4);cursor:pointer}
+.pin.sel{width:22px;height:22px}
+.stn{width:12px;height:12px;border-radius:50%;background:#fff;border:3px solid #555}
+.cmr{background:#1d2330;color:#fff;border-radius:6px;padding:2px 7px;font-size:12px;font-weight:700;white-space:nowrap}
 .maperr{padding:20px;color:var(--sub);font-size:13px}
 @media (max-width:900px){.wrap{grid-template-columns:1fr;height:auto}.panel{max-height:none}.list{max-height:46vh}.right{grid-template-rows:340px auto}}
 </style>
@@ -94,7 +97,8 @@ table.facts td:first-child{color:var(--sub);width:120px}
   </section>
 </div>
 <script src="data.js"></script>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>window.KAKAO_JS_KEY="40f8069323d70eeb21bd17bc8e1146fc";</script>
+<script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=40f8069323d70eeb21bd17bc8e1146fc&autoload=false"></script>
 <script>
 (function(){
 const R=window.RUN, A=window.APTS, P=R.params;
@@ -176,39 +180,47 @@ function renderDetail(a){
    <div class="notes">${R.notes.map(n=>"· "+esc(n)).join("<br>")}</div>`;
 }
 
-// map
-let map=null, markers={}, routeLayer=null;
-function initMap(){
-  if(!window.L){document.getElementById("map").innerHTML='<div class="maperr">지도 라이브러리를 불러오지 못했습니다(네트워크 확인). 목록과 상세 정보는 그대로 볼 수 있습니다.</div>';return}
-  map=L.map("map",{zoomControl:true});
-  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:18,attribution:'&copy; OpenStreetMap contributors'}).addTo(map);
-  const cm=R.chungmuro;
-  L.marker([cm.lat,cm.lng],{title:"충무로역"}).addTo(map).bindTooltip("★ 충무로역",{permanent:true,direction:"top",className:"rt-label"});
-  A.forEach(a=>{
-    markers[a.id]=L.circleMarker([a.lat,a.lng],{radius:7,color:"#fff",weight:2,fillColor:catColor[a.cat],fillOpacity:.95})
-      .addTo(map).bindTooltip(a.name).on("click",()=>select(a.id,false));
+// map (Kakao Maps JS SDK — 등록 도메인 kage-korea.github.io 에서만 동작)
+let map=null, pins={}, routeObjs=[];
+const K=()=>window.kakao&&kakao.maps;
+const LL=(lat,lng)=>new kakao.maps.LatLng(lat,lng);
+function overlay(pos,html,z,onClick){const el=document.createElement("div");el.innerHTML=html;const n=el.firstChild;if(onClick)n.addEventListener("click",onClick);
+  return new kakao.maps.CustomOverlay({position:pos,content:n,zIndex:z||1,yAnchor:.5,xAnchor:.5})}
+function mapError(){document.getElementById("map").innerHTML='<div class="maperr">지도를 불러오지 못했습니다. 카카오 지도는 등록된 도메인(kage-korea.github.io)에서만 표시됩니다. 목록과 상세 정보는 그대로 볼 수 있습니다.</div>'}
+function initMap(done){
+  if(!window.kakao||!kakao.maps||!kakao.maps.load){mapError();done();return}
+  let ok=false; setTimeout(()=>{if(!ok){mapError();done()}},6000);
+  kakao.maps.load(()=>{ok=true;
+    const cm=R.chungmuro;
+    map=new kakao.maps.Map(document.getElementById("map"),{center:LL(cm.lat,cm.lng),level:9});
+    map.addControl(new kakao.maps.ZoomControl(),kakao.maps.ControlPosition.RIGHT);
+    overlay(LL(cm.lat,cm.lng),'<div class="cmr">★ 충무로역</div>',5).setMap(map);
+    A.forEach(a=>{const o=overlay(LL(a.lat,a.lng),`<div class="pin" title="${esc(a.name)}" style="background:${catColor[a.cat]}"></div>`,3,()=>select(a.id,false));o.setMap(map);pins[a.id]=o});
+    const lg=document.createElement("div");lg.className="legend";
+    lg.innerHTML=Object.keys(catColor).map(k=>`<i style="background:${catColor[k]}"></i>${k}`).join(" &nbsp;")+"<br>— 회색 점선: 도보 · 색 실선: 전철(개략)";
+    document.getElementById("map").appendChild(lg);
+    const bd=new kakao.maps.LatLngBounds();A.forEach(a=>bd.extend(LL(a.lat,a.lng)));bd.extend(LL(cm.lat,cm.lng));map.setBounds(bd,20,20,20,20);
+    done();
   });
-  const lg=L.control({position:"bottomleft"});
-  lg.onAdd=()=>{const d=L.DomUtil.create("div","legend");d.innerHTML=Object.keys(catColor).map(k=>`<i style="background:${catColor[k]}"></i>${k}`).join(" &nbsp;")+"<br>— 회색 점선: 도보 · 색 실선: 전철(개략)";return d};
-  lg.addTo(map);
-  routeLayer=L.layerGroup().addTo(map);
-  map.fitBounds(L.latLngBounds(A.map(a=>[a.lat,a.lng]).concat([[cm.lat,cm.lng]])),{padding:[20,20]});
 }
 function drawRoute(a){
   if(!map)return;
-  routeLayer.clearLayers();
-  Object.entries(markers).forEach(([id,m])=>m.setRadius(id===a.id?11:7));
-  const cm=R.chungmuro, st=[a.stLat,a.stLng];
-  const walk=L.polyline([[a.lat,a.lng],st],{color:"#667085",weight:4,dashArray:"6 6"}).addTo(routeLayer);
-  walk.bindTooltip(`🚶 ${a.walkMin}분`,{permanent:true,className:"rt-label"});
-  L.circleMarker(st,{radius:6,color:R.lineColor[a.line]||"#555",weight:3,fillColor:"#fff",fillOpacity:1}).addTo(routeLayer).bindTooltip(a.station);
-  let pts=[st], segs=[];
-  if(a.via){const v=R.transfers[a.via];segs.push([st,[v.lat,v.lng],R.lineColor[a.line]]);segs.push([[v.lat,v.lng],[cm.lat,cm.lng],R.lineColor[a.transferLine]]);
-    L.circleMarker([v.lat,v.lng],{radius:5,color:"#333",weight:2,fillColor:"#fff",fillOpacity:1}).addTo(routeLayer).bindTooltip(a.via+" 환승");}
-  else segs.push([st,[cm.lat,cm.lng],R.lineColor[a.line]||"#555"]);
-  segs.forEach((s,i)=>{const pl=L.polyline([s[0],s[1]],{color:s[2],weight:5,opacity:.9,dashArray:a.rideEstimated?"10 6":null}).addTo(routeLayer);
-    if(i===0)pl.bindTooltip(`🚇 ${a.rideMin}분${a.rideEstimated?"(추정)":""}`,{permanent:true,className:"rt-label"});});
-  map.fitBounds(L.latLngBounds([[a.lat,a.lng],st,[cm.lat,cm.lng]]),{padding:[40,40]});
+  routeObjs.forEach(o=>o.setMap(null)); routeObjs=[];
+  Object.entries(pins).forEach(([id,o])=>{const n=o.getContent();n.classList.toggle("sel",id===a.id);o.setZIndex(id===a.id?4:3)});
+  const cm=R.chungmuro, st=LL(a.stLat,a.stLng), ap=LL(a.lat,a.lng), cp=LL(cm.lat,cm.lng);
+  const add=o=>{o.setMap(map);routeObjs.push(o);return o};
+  const mid=(p,q)=>LL((p.getLat()+q.getLat())/2,(p.getLng()+q.getLng())/2);
+  add(new kakao.maps.Polyline({path:[ap,st],strokeWeight:4,strokeColor:"#667085",strokeOpacity:.95,strokeStyle:"shortdash"}));
+  add(overlay(mid(ap,st),`<div class="rt-label">🚶 ${a.walkMin}분</div>`,6));
+  const lc=R.lineColor[a.line]||"#555";
+  add(overlay(st,`<div class="stn" title="${esc(a.station)}" style="border-color:${lc}"></div>`,4));
+  const segs=[];
+  if(a.via){const v=R.transfers[a.via], vp=LL(v.lat,v.lng);segs.push([st,vp,lc]);segs.push([vp,cp,R.lineColor[a.transferLine]||"#555"]);
+    add(overlay(vp,`<div class="stn" title="${esc(a.via)} 환승" style="border-color:#333"></div>`,4));}
+  else segs.push([st,cp,lc]);
+  segs.forEach((g,i)=>{add(new kakao.maps.Polyline({path:[g[0],g[1]],strokeWeight:5,strokeColor:g[2],strokeOpacity:.9,strokeStyle:a.rideEstimated?"dash":"solid"}));
+    if(i===0)add(overlay(mid(g[0],g[1]),`<div class="rt-label">🚇 ${a.rideMin}분${a.rideEstimated?"(추정)":""}</div>`,6));});
+  const bd=new kakao.maps.LatLngBounds();[ap,st,cp].forEach(p=>bd.extend(p));map.setBounds(bd,40,40,40,40);
 }
 function select(id,fromList){
   selId=id; const a=A.find(x=>x.id===id);
@@ -218,8 +230,9 @@ function select(id,fromList){
 document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{document.querySelectorAll(".tab").forEach(x=>x.classList.remove("on"));b.classList.add("on");cat=b.dataset.cat;renderList()});
 document.getElementById("schOnly").onchange=e=>{schOnly=e.target.checked;renderList()};
 document.getElementById("sort").onchange=e=>{sort=e.target.value;renderList()};
-initMap(); renderList();
+renderList();
 const first=rows()[0]; if(first) select(first.id,true); else renderDetail(null);
+initMap(()=>{const a=A.find(x=>x.id===selId); if(a) drawRoute(a);});
 })();
 </script>
 </body>
