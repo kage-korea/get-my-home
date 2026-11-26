@@ -1,0 +1,53 @@
+// 아파트 찾기 결과 데이터 (실행일 2026-11-26)
+window.RUN = {
+ "date": "2026-11-26",
+ "params": {
+  "maxPrice": 10,
+  "base": "충무로역(3·4호선)",
+  "commuteMax": 70,
+  "area": "전용 84㎡ 이상",
+  "age": "준공 15년 이내",
+  "households": 500,
+  "walkMax": 850,
+  "walkEdge": 1000,
+  "schoolMax": 10,
+  "sale": "84㎡↑·10억↓ 매매 매물 있는 단지만"
+ },
+ "chungmuro": {
+  "lat": 37.561243,
+  "lng": 126.994157
+ },
+ "transfers": {
+  "서울역": {
+   "lat": 37.55465,
+   "lng": 126.9706
+  }
+ },
+ "lineColor": {
+  "3호선": "#EF7C1C",
+  "4호선": "#00A5DE",
+  "GTX-A": "#9A6292",
+  "경의중앙선": "#77C4A3"
+ },
+ "notes": [
+  "매물: 호갱노노 매물 목록 기준 전용 84㎡ 이상·10억 이하 매매 매물 수와 호가 범위(2026-11-26 조회). 실시간 변동 있음.",
+  "도보 시간은 2026-11-25 카카오맵 측정값 재사용(단지·역 위치 변동 없음).",
+  "역→충무로역 소요는 이전 실행의 카카오맵 실측값(조회 시각 기준)이며 이번 실행에서 재측정하지 않음. 일산은 추정.",
+  "경로선은 개략도(단지→역 도보 + 역→환승역→충무로 직선 연결)로 실제 선로 모양과 다름.",
+  "통학구역은 호갱노노 표기이며 실제 배정은 교육청 확인 필요.",
+  "도보는 카카오맵 최단 경로 기준. 일부 단지는 지번 주소로 측정(단지 출입구 기준과 다를 수 있음)."
+ ]
+};
+window.APTS = [
+ {"id":"dCN4b","cat":"추천","region":"일산","name":"e편한세상일산어반스카이","built":"2022-12","hh":552,"lat":37.683663,"lng":126.769819,"station":"일산역","line":"경의중앙선","stLat":37.682229,"stLng":126.769508,"walkMin":3,"walkM":204,"rideMin":57,"rideEstimated":true,"commute":60,"priceText":"매매 매물 8건 · 호가 7~10억","priceMin":7,"priceMax":10,"school":"일산초","schoolMin":9,"schoolM":568,"schoolDistrict":"일산초","memo":"역→충무로 57분은 추정(환승 경로 미확인).","saleCount":8},
+ {"id":"aTD36","cat":"추천","region":"별내","name":"별내아이파크2차","built":"2015-07","hh":1083,"lat":37.664312,"lng":127.116413,"station":"별내별가람역","line":"4호선","stLat":37.667846,"stLng":127.116242,"walkMin":9,"walkM":547,"rideMin":38,"commute":47,"priceText":"매매 매물 22건 · 호가 8.5~10억","priceMin":8.5,"priceMax":10,"school":"남양주덕송초","schoolMin":12,"schoolM":716,"schoolDistrict":"남양주덕송초","memo":"별가람초 24분, 화접초 28분.","saleCount":22},
+ {"id":"cO02f","cat":"추천","region":"운정","name":"한울마을1단지 운정신도시아이파크","built":"2020-07","hh":3042,"lat":37.715024,"lng":126.734476,"station":"운정중앙역","line":"GTX-A","stLat":37.716127,"stLng":126.728145,"via":"서울역","transferLine":"4호선","walkMin":13,"walkM":764,"rideMin":35,"commute":48,"priceText":"매매 매물 3건 · 호가 8~10억 (85~110㎡)","priceMin":8,"priceMax":10,"school":"동패초","schoolMin":11,"schoolM":774,"schoolDistrict":"동패초","memo":"매물설명 '초품아' 있음. 대단지라 동별 차이 큼.","saleCount":3},
+ {"id":"aQ0e2","cat":"추천","region":"운정","name":"산내마을10단지 운정센트럴푸르지오","built":"2018-07","hh":1956,"lat":37.71935,"lng":126.734519,"station":"운정중앙역","line":"GTX-A","stLat":37.716127,"stLng":126.728145,"via":"서울역","transferLine":"4호선","walkMin":13,"walkM":808,"rideMin":35,"commute":48,"priceText":"매매 매물 6건 · 호가 6.7~7.5억","priceMin":6.7,"priceMax":7.5,"school":"산내초","schoolMin":11,"schoolM":759,"schoolDistrict":"산내초","memo":"30평 1개월 실거래 평균 6억.","saleCount":6},
+ {"id":"5XVa7","cat":"추천","region":"별내","name":"별내아이파크","built":"2012-01","hh":753,"lat":37.662082,"lng":127.11785,"station":"별내별가람역","line":"4호선","stLat":37.667846,"stLng":127.116242,"walkMin":12,"walkM":783,"rideMin":38,"commute":50,"priceText":"매매 매물 15건 · 호가 8.7~10억 (107~141㎡)","priceMin":8.7,"priceMax":10,"school":"남양주덕송초","schoolMin":15,"schoolM":957,"schoolDistrict":"남양주덕송초","memo":"84㎡ 타입 없음. 지번주소 기준 측정.","saleCount":15},
+ {"id":"5Lb14","cat":"경계","region":"원흥","name":"삼송리슈빌센트럴파크","built":"2012-12","hh":1024,"lat":37.65224,"lng":126.880841,"station":"원흥역","line":"3호선","stLat":37.650692,"stLng":126.873025,"walkMin":14,"walkM":866,"rideMin":34,"commute":48,"priceText":"매매 매물 15건 · 호가 7.5~8.5억","priceMin":7.5,"priceMax":8.5,"school":"삼송초","schoolMin":7,"schoolM":396,"schoolDistrict":"삼송초","memo":"매물설명 '삼송초 인접/초품아'. 삼송역은 24분 1.5km.","saleCount":15},
+ {"id":"5LLef","cat":"경계","region":"삼송","name":"삼송마을동원로얄듀크","built":"2012-09","hh":598,"lat":37.653145,"lng":126.8861,"station":"삼송역","line":"3호선","stLat":37.653265,"stLng":126.895734,"walkMin":16,"walkM":1000,"rideMin":32,"commute":48,"priceText":"매매 매물 22건 · 호가 7.3~9.5억 (85~117㎡)","priceMin":7.3,"priceMax":9.5,"school":"삼송초","schoolMin":8,"schoolM":493,"schoolDistrict":"삼송초","memo":"역 도보 약 1.0km.","saleCount":22},
+ {"id":"ayi2b","cat":"경계","region":"삼송","name":"삼송2차아이파크","built":"2015-08","hh":1066,"lat":37.650317,"lng":126.887081,"station":"삼송역","line":"3호선","stLat":37.653265,"stLng":126.895734,"walkMin":15,"walkM":934,"rideMin":32,"commute":47,"priceText":"매매 매물 36건 · 호가 8.7~10억","priceMin":8.7,"priceMax":10,"school":"창릉초","schoolMin":14,"schoolM":864,"schoolDistrict":"삼송초(16분 933m)","memo":"가장 가까운 초교는 창릉초, 통학구역은 삼송초. 원흥역 26분.","saleCount":36},
+ {"id":"5LK1e","cat":"경계","region":"원흥","name":"삼송마을19단지 스타클래스","built":"2014-12","hh":627,"lat":37.649253,"lng":126.882496,"station":"원흥역","line":"3호선","stLat":37.650692,"stLng":126.873025,"walkMin":16,"walkM":1000,"rideMin":34,"commute":50,"priceText":"매매 매물 23건 · 호가 7.8~10억 (85~102㎡)","priceMin":7.8,"priceMax":10,"school":"고양동산초","schoolMin":13,"schoolM":776,"schoolDistrict":"고양동산초·원흥초 공동","memo":"역 도보 약 1.0km.","saleCount":23},
+ {"id":"aQlcd","cat":"초과","region":"안산","name":"힐스테이트중앙","built":"2018-11","hh":1152,"lat":37.320073,"lng":126.835262,"station":"중앙역","line":"4호선","stLat":37.315995,"stLng":126.83883,"walkMin":13,"walkM":790,"rideMin":66,"commute":79,"priceText":"매매 매물 3건 · 호가 9~9.5억","priceMin":9,"priceMax":9.5,"school":"안산중앙초","schoolMin":7,"schoolM":417,"schoolDistrict":"안산중앙초","memo":"통근 70분 초과. 지번주소 기준 측정.","saleCount":3},
+ {"id":"aIha3","cat":"초과","region":"안산","name":"안산센트럴푸르지오","built":"2018-04","hh":990,"lat":37.319815,"lng":126.839114,"station":"중앙역","line":"4호선","stLat":37.315995,"stLng":126.83883,"walkMin":13,"walkM":818,"rideMin":66,"commute":79,"priceText":"매매 매물 10건 · 호가 8.9~10억 (85~100㎡)","priceMin":8.9,"priceMax":10,"school":"안산중앙초","schoolMin":7,"schoolM":419,"schoolDistrict":"안산중앙초","memo":"통근 70분 초과. 일부 실거래 10억 초과.","saleCount":10}
+];
